@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaMonitor — Sim → Physical Bridge</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07111e;--panel:#0b1a2e;--card:#0f2038;--border:#132a48;--border2:#1c3d63;
+  --accent:#00c8ff;--green:#00e87a;--warn:#ffb020;--red:#ff3a55;
+  --text:#cce0f5;--dim:#3d6080;--dim2:#5a80a0;
+  --sim:#0d2a1a;--sim-border:#0f5032;--sim-acc:#00e87a;
+  --phys:#1a1005;--phys-border:#7a4a00;--phys-acc:#ffa020;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;}
+
+header{background:linear-gradient(135deg,#051020,#0a1830);border-bottom:1px solid var(--border2);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;}
+.hd{display:flex;align-items:center;gap:14px;}
+.hd-icon{width:46px;height:46px;background:linear-gradient(135deg,var(--accent),var(--green));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 20px rgba(0,200,255,0.3);}
+.hd h1{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:2px;}
+.hd p{font-size:11px;color:var(--dim2);letter-spacing:2px;margin-top:2px;text-transform:uppercase;}
+.hd-badge{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);background:rgba(0,232,122,0.06);border:1px solid rgba(0,232,122,0.2);padding:6px 14px;border-radius:20px;}
+
+.main{max-width:1000px;margin:0 auto;padding:36px 28px;}
+
+/* hero */
+.hero{background:linear-gradient(135deg,rgba(0,200,255,0.05),rgba(0,232,122,0.03));border:1px solid var(--border2);border-radius:14px;padding:26px 30px;margin-bottom:32px;display:flex;align-items:center;gap:20px;}
+.hero-icon{font-size:48px;flex-shrink:0;}
+.hero h2{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.hero p{font-size:13px;color:var(--dim2);line-height:1.7;}
+
+/* section title */
+.stitle{font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* THE MAIN BRIDGE TABLE */
+.bridge{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;margin-bottom:32px;align-items:stretch;}
+.bridge-col{display:flex;flex-direction:column;gap:10px;}
+.bridge-center{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:flex-start;padding-top:44px;}
+.bridge-arrow{font-size:20px;color:var(--dim2);display:flex;align-items:center;justify-content:center;height:70px;}
+
+.col-header{padding:12px 16px;border-radius:10px 10px 0 0;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-align:center;text-transform:uppercase;}
+.col-header.sim{background:var(--sim-border);color:var(--sim-acc);}
+.col-header.phys{background:var(--phys-border);color:var(--phys-acc);}
+
+.bridge-row{display:contents;}
+.sim-cell,.phys-cell{padding:14px 16px;border:1px solid;border-radius:8px;font-size:13px;min-height:70px;display:flex;flex-direction:column;justify-content:center;}
+.sim-cell{background:var(--sim);border-color:var(--sim-border);}
+.phys-cell{background:var(--phys);border-color:var(--phys-border);}
+.cell-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.cell-label.sim{color:var(--sim-acc);}
+.cell-label.phys{color:var(--phys-acc);}
+.cell-main{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;}
+.cell-sub{font-size:11px;color:var(--dim2);margin-top:3px;font-family:'Share Tech Mono',monospace;}
+.cell-pin{display:inline-block;background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.2);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:10px;padding:1px 6px;border-radius:4px;margin-top:4px;}
+
+/* one-line change box */
+.one-liner{background:linear-gradient(135deg,rgba(0,200,255,0.06),rgba(0,232,122,0.04));border:1px solid var(--border2);border-radius:12px;padding:22px 26px;margin-bottom:32px;}
+.one-liner h3{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--green);margin-bottom:12px;}
+.code-box{background:#020c14;border-radius:8px;overflow:hidden;margin-bottom:10px;}
+.code-top{background:#051020;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;}
+.code-top span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim2);}
+.code-pre{padding:14px 16px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.8;overflow-x:auto;}
+.cm{color:#3d7055;font-style:italic;}.kw{color:#569cd6;}.pp{color:#c586c0;}.str{color:#ce9178;}
+
+/* steps */
+.steps{display:flex;flex-direction:column;gap:12px;margin-bottom:32px;}
+.step{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start;}
+.step-n{width:32px;height:32px;background:var(--accent);color:#020c14;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;flex-shrink:0;}
+.step h4{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;margin-bottom:5px;color:var(--text);}
+.step p,.step li{font-size:13px;color:var(--dim2);line-height:1.7;}
+.step ul{padding-left:18px;}
+.step code{background:rgba(0,200,255,0.08);font-family:'Share Tech Mono',monospace;font-size:11px;padding:1px 5px;border-radius:3px;color:var(--accent);}
+
+/* callout */
+.callout{border-radius:8px;padding:12px 16px;margin:10px 0;font-size:13px;line-height:1.7;}
+.callout.warn{background:rgba(255,176,32,0.06);border-left:3px solid var(--warn);color:#d4921a;}
+.callout.tip{background:rgba(0,232,122,0.06);border-left:3px solid var(--green);color:#00b560;}
+.callout.info{background:rgba(0,200,255,0.06);border-left:3px solid var(--accent);color:#00a0d0;}
+
+/* wiring table */
+.wtable{width:100%;border-collapse:collapse;margin-bottom:32px;font-size:13px;}
+.wtable th{background:rgba(0,200,255,0.07);padding:10px 14px;text-align:left;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--border2);}
+.wtable td{padding:10px 14px;border-bottom:1px solid var(--border);}
+.wtable tr:last-child td{border-bottom:none;}
+.w-sim{background:rgba(0,232,122,0.08);color:var(--sim-acc);font-family:'Share Tech Mono',monospace;font-size:11px;padding:2px 7px;border-radius:4px;}
+.w-phys{background:rgba(255,160,32,0.1);color:var(--phys-acc);font-family:'Share Tech Mono',monospace;font-size:11px;padding:2px 7px;border-radius:4px;}
+.w-same{background:rgba(0,200,255,0.08);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:11px;padding:2px 7px;border-radius:4px;}
+
+/* checklist */
+.checklist{display:flex;flex-direction:column;gap:8px;margin-bottom:32px;}
+.ci{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:13px;cursor:pointer;transition:border-color 0.2s;}
+.ci:hover{border-color:var(--border2);}
+.ci input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:var(--green);flex-shrink:0;}
+.ci label{cursor:pointer;color:var(--dim2);line-height:1.6;}
+.ci label strong{color:var(--text);}
+
+/* final badge */
+.final{text-align:center;padding:28px;background:linear-gradient(135deg,rgba(0,200,255,0.05),rgba(0,232,122,0.04));border:1px solid var(--border2);border-radius:14px;}
+.final h2{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--green);letter-spacing:2px;margin-bottom:8px;}
+.final p{font-size:13px;color:var(--dim2);line-height:1.7;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="hd-icon">🔌</div>
+    <div>
+      <h1>SIM → PHYSICAL BRIDGE GUIDE</h1>
+      <p>How simulation maps to real hardware · One line to switch</p>
+    </div>
+  </div>
+  <div class="hd-badge">● PLUG-IN READY</div>
+</header>
+
+<div class="main">
+
+  <div class="hero">
+    <div class="hero-icon">⚡</div>
+    <div>
+      <h2>One file. One line change. Two modes.</h2>
+      <p>The <code style="background:rgba(0,200,255,0.1);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:12px;padding:1px 5px;border-radius:3px;">sketch.ino</code> runs in <strong style="color:var(--sim-acc);">SIMULATION mode</strong> by default — potentiometers pretend to be sensors. When your physical circuit is ready, uncomment <strong style="color:var(--phys-acc);">#define PHYSICAL_MODE</strong> and re-upload. The same pins, same code, same serial output — real sensors just replace the pots. This page explains exactly what swaps out.</p>
+    </div>
+  </div>
+
+  <!-- ─── ONE-LINE CHANGE ─── -->
+  <div class="stitle">The One-Line Switch</div>
+  <div class="one-liner">
+    <h3>To go from simulation → physical:</h3>
+    <div class="code-box">
+      <div class="code-top"><span>sketch.ino — top of file</span><span>BEFORE (simulation)</span></div>
+      <div class="code-pre"><span class="cm">// #define PHYSICAL_MODE</span>   <span class="cm">← this line is commented out → simulation mode</span></div>
+    </div>
+    <div class="code-box">
+      <div class="code-top"><span>sketch.ino — top of file</span><span style="color:var(--phys-acc);">AFTER (physical)</span></div>
+      <div class="code-pre"><span class="pp">#define</span> PHYSICAL_MODE      <span class="cm">← remove the // → physical mode. Re-upload. Done.</span></div>
+    </div>
+    <div class="callout tip"><strong>That's literally it.</strong> Nothing else changes. Same GPIO pins, same WHO thresholds, same serial report format, same LED indicators. The code automatically uses the correct reading formula for whichever mode is active.</div>
+  </div>
+
+  <!-- ─── BRIDGE TABLE ─── -->
+  <div class="stitle">What Each Part Maps To</div>
+
+  <div class="bridge">
+    <!-- HEADER ROW -->
+    <div class="col-header sim">🖥 Simulation (Wokwi)</div>
+    <div></div>
+    <div class="col-header phys">🔬 Physical Circuit</div>
+
+    <!-- pH -->
+    <div class="sim-cell">
+      <div class="cell-label sim">pH sensor</div>
+      <div class="cell-main">Potentiometer</div>
+      <div class="cell-sub">Twist knob → 0 to 14 pH range<br>Voltage 0–3.3V → mapped to pH 0–14</div>
+      <span class="cell-pin">GPIO34</span>
+    </div>
+    <div class="bridge-arrow">→</div>
+    <div class="phys-cell">
+      <div class="cell-label phys">pH sensor</div>
+      <div class="cell-main">pH Module + Glass Probe</div>
+      <div class="cell-sub">BNC probe → amplifier PCB → analog voltage<br>2-point calibration with pH 4 + pH 7 buffers</div>
+      <span class="cell-pin">GPIO34 — same pin, same wire</span>
+    </div>
+
+    <!-- TDS -->
+    <div class="sim-cell">
+      <div class="cell-label sim">TDS sensor</div>
+      <div class="cell-main">Potentiometer</div>
+      <div class="cell-sub">Twist knob → 0 to 1000 ppm<br>Voltage 0–3.3V → mapped to 0–1000 ppm</div>
+      <span class="cell-pin">GPIO35</span>
+    </div>
+    <div class="bridge-arrow">→</div>
+    <div class="phys-cell">
+      <div class="cell-label phys">TDS sensor</div>
+      <div class="cell-main">TDS Module + Dual-Probe</div>
+      <div class="cell-sub">Metal probes in water → conductivity → voltage<br>Temperature-compensated using DS18B20 reading</div>
+      <span class="cell-pin">GPIO35 — same pin, same wire</span>
+    </div>
+
+    <!-- Turbidity -->
+    <div class="sim-cell">
+      <div class="cell-label sim">Turbidity sensor</div>
+      <div class="cell-main">Potentiometer</div>
+      <div class="cell-sub">Twist knob → 0 to 3000 NTU<br>Voltage 0–3.3V → mapped to 0–3000 NTU</div>
+      <span class="cell-pin">GPIO32</span>
+    </div>
+    <div class="bridge-arrow">→</div>
+    <div class="phys-cell">
+      <div class="cell-label phys">Turbidity sensor</div>
+      <div class="cell-main">Optical Turbidity Module</div>
+      <div class="cell-sub">IR LED + photodetector in water<br>⚠ Output is INVERTED: high V = clear water</div>
+      <span class="cell-pin">GPIO32 — same pin, same wire</span>
+    </div>
+
+    <!-- Temperature -->
+    <div class="sim-cell">
+      <div class="cell-label sim">Temperature sensor</div>
+      <div class="cell-main">DS18B20 (Wokwi built-in)</div>
+      <div class="cell-sub">Virtual sensor in Wokwi<br>Can be set to any temperature value</div>
+      <span class="cell-pin">GPIO4</span>
+    </div>
+    <div class="bridge-arrow">→</div>
+    <div class="phys-cell">
+      <div class="cell-label phys">Temperature sensor</div>
+      <div class="cell-main">DS18B20 Waterproof Probe</div>
+      <div class="cell-sub">Same exact component — plug in probe<br>4.7kΩ pull-up resistor required</div>
+      <span class="cell-pin">GPIO4 — same pin, same wire</span>
+    </div>
+
+    <!-- LEDs -->
+    <div class="sim-cell">
+      <div class="cell-label sim">Status indicator</div>
+      <div class="cell-main">Wokwi LEDs (virtual)</div>
+      <div class="cell-sub">Green/Yellow/Red LEDs in the simulator<br>Light up based on water quality status</div>
+      <span class="cell-pin">GPIO13 / GPIO12 / GPIO14</span>
+    </div>
+    <div class="bridge-arrow">→</div>
+    <div class="phys-cell">
+      <div class="cell-label phys">Status indicator</div>
+      <div class="cell-main">Real LEDs on breadboard</div>
+      <div class="cell-sub">Same GPIO pins drive real LEDs<br>Add 220Ω resistor in series with each LED</div>
+      <span class="cell-pin">GPIO13 / GPIO12 / GPIO14 — same pins</span>
+    </div>
+
+    <!-- Power -->
+    <div class="sim-cell">
+      <div class="cell-label sim">Power source</div>
+      <div class="cell-main">Wokwi virtual power</div>
+      <div class="cell-sub">Simulator handles VCC/GND internally<br>No battery needed in simulation</div>
+      <span class="cell-pin">3V3 / GND rails</span>
+    </div>
+    <div class="bridge-arrow">→</div>
+    <div class="phys-cell">
+      <div class="cell-label phys">Power source</div>
+      <div class="cell-main">18650 + TP4056 module</div>
+      <div class="cell-sub">Battery → TP4056 protection module → ESP32 VIN<br>OR just USB cable during development</div>
+      <span class="cell-pin">VIN pin (5V) or USB</span>
+    </div>
+  </div>
+
+  <!-- ─── COMPLETE WIRING TABLE ─── -->
+  <div class="stitle">Complete Physical Wiring — Every Connection</div>
+  <table class="wtable">
+    <tr>
+      <th>From (Component)</th>
+      <th>From Pin</th>
+      <th>To (ESP32)</th>
+      <th>Wire Color</th>
+      <th>In Simulation</th>
+      <th>Notes</th>
+    </tr>
+    <tr>
+      <td>DS18B20 probe</td>
+      <td>RED (VCC)</td>
+      <td>3.3V rail</td>
+      <td><span class="w-same">RED</span></td>
+      <td>Same component</td>
+      <td>3.3V supply</td>
+    </tr>
+    <tr>
+      <td>DS18B20 probe</td>
+      <td>BLACK (GND)</td>
+      <td>GND rail</td>
+      <td><span class="w-same">BLACK</span></td>
+      <td>Same component</td>
+      <td>Common ground</td>
+    </tr>
+    <tr>
+      <td>DS18B20 probe</td>
+      <td>YELLOW (DQ data)</td>
+      <td>GPIO4</td>
+      <td><span class="w-same">BLUE</span></td>
+      <td>Same component</td>
+      <td>4.7kΩ pull-up to 3.3V required!</td>
+    </tr>
+    <tr>
+      <td>4.7kΩ Resistor</td>
+      <td>Leg 1</td>
+      <td>GPIO4 row</td>
+      <td>—</td>
+      <td>Same resistor</td>
+      <td>Pull-up for DS18B20</td>
+    </tr>
+    <tr>
+      <td>4.7kΩ Resistor</td>
+      <td>Leg 2</td>
+      <td>3.3V rail</td>
+      <td>—</td>
+      <td>Same resistor</td>
+      <td>Must span DQ row to 3.3V</td>
+    </tr>
+    <tr>
+      <td><strong>pH Module PCB</strong></td>
+      <td>VCC</td>
+      <td>3.3V rail</td>
+      <td><span class="w-phys">RED</span></td>
+      <td><span class="w-sim">Pot VCC</span></td>
+      <td>Max 3.3V — not 5V!</td>
+    </tr>
+    <tr>
+      <td><strong>pH Module PCB</strong></td>
+      <td>GND</td>
+      <td>GND rail</td>
+      <td><span class="w-phys">BLACK</span></td>
+      <td><span class="w-sim">Pot GND</span></td>
+      <td>Common ground</td>
+    </tr>
+    <tr>
+      <td><strong>pH Module PCB</strong></td>
+      <td>Po / SIG (analog out)</td>
+      <td>GPIO34</td>
+      <td><span class="w-phys">YELLOW</span></td>
+      <td><span class="w-sim">Pot SIG</span></td>
+      <td>Input-only ADC — max 3.3V</td>
+    </tr>
+    <tr>
+      <td><strong>TDS Module PCB</strong></td>
+      <td>VCC</td>
+      <td>3.3V rail</td>
+      <td><span class="w-phys">RED</span></td>
+      <td><span class="w-sim">Pot VCC</span></td>
+      <td>Connect probe before powering</td>
+    </tr>
+    <tr>
+      <td><strong>TDS Module PCB</strong></td>
+      <td>GND</td>
+      <td>GND rail</td>
+      <td><span class="w-phys">BLACK</span></td>
+      <td><span class="w-sim">Pot GND</span></td>
+      <td>Common ground</td>
+    </tr>
+    <tr>
+      <td><strong>TDS Module PCB</strong></td>
+      <td>AOUT (analog out)</td>
+      <td>GPIO35</td>
+      <td><span class="w-phys">ORANGE</span></td>
+      <td><span class="w-sim">Pot SIG</span></td>
+      <td>Input-only ADC — max 3.3V</td>
+    </tr>
+    <tr>
+      <td><strong>Turbidity Sensor</strong></td>
+      <td>VCC</td>
+      <td>3.3V rail</td>
+      <td><span class="w-phys">RED</span></td>
+      <td><span class="w-sim">Pot VCC</span></td>
+      <td>Check if module is 3.3V or 5V</td>
+    </tr>
+    <tr>
+      <td><strong>Turbidity Sensor</strong></td>
+      <td>GND</td>
+      <td>GND rail</td>
+      <td><span class="w-phys">BLACK</span></td>
+      <td><span class="w-sim">Pot GND</span></td>
+      <td>Common ground</td>
+    </tr>
+    <tr>
+      <td><strong>Turbidity Sensor</strong></td>
+      <td>OUT (analog)</td>
+      <td>GPIO32</td>
+      <td><span class="w-phys">PURPLE</span></td>
+      <td><span class="w-sim">Pot SIG</span></td>
+      <td>If 5V output, use voltage divider</td>
+    </tr>
+    <tr>
+      <td>Green LED</td>
+      <td>Anode (+) via 220Ω</td>
+      <td>GPIO13</td>
+      <td><span class="w-same">GREEN</span></td>
+      <td>Same pin</td>
+      <td>SAFE indicator</td>
+    </tr>
+    <tr>
+      <td>Yellow LED</td>
+      <td>Anode (+) via 220Ω</td>
+      <td>GPIO12</td>
+      <td><span class="w-same">YELLOW</span></td>
+      <td>Same pin</td>
+      <td>MARGINAL indicator</td>
+    </tr>
+    <tr>
+      <td>Red LED</td>
+      <td>Anode (+) via 220Ω</td>
+      <td>GPIO14</td>
+      <td><span class="w-same">RED</span></td>
+      <td>Same pin</td>
+      <td>UNSAFE indicator</td>
+    </tr>
+    <tr>
+      <td>All LEDs</td>
+      <td>Cathode (−)</td>
+      <td>GND rail</td>
+      <td><span class="w-same">BLACK</span></td>
+      <td>Same</td>
+      <td>Short leg of LED</td>
+    </tr>
+    <tr>
+      <td>TP4056 Module</td>
+      <td>OUT+</td>
+      <td>VIN</td>
+      <td><span class="w-phys">RED</span></td>
+      <td>Not needed</td>
+      <td>Or use USB cable for power</td>
+    </tr>
+    <tr>
+      <td>TP4056 Module</td>
+      <td>OUT−</td>
+      <td>GND</td>
+      <td><span class="w-phys">BLACK</span></td>
+      <td>Not needed</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <!-- ─── STEP BY STEP ─── -->
+  <div class="stitle">Transition Steps — Simulation to Physical</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div>
+        <h4>Keep everything from simulation — only REPLACE the potentiometers</h4>
+        <p>The ESP32 stays in the same position. The DS18B20, resistor, and LED wires stay exactly the same. The only things that change are the 3 potentiometers — remove them and connect the real sensor modules to the same GPIO pins in their place.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div>
+        <h4>Connect pH Module PCB where the pH potentiometer was</h4>
+        <p>The pot had 3 wires: GND, SIG, VCC going to the breadboard rails and GPIO34. Replace with pH PCB: <code>VCC→3.3V rail</code>, <code>GND→GND rail</code>, <code>Po→GPIO34</code>. Lock the BNC glass probe into the PCB first.</p>
+        <div class="callout warn"><strong>Before powering on:</strong> Calibrate with pH 7 buffer — adjust the blue trimmer pot on the PCB until Serial Monitor reads 7.00.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div>
+        <h4>Connect TDS Module where the TDS potentiometer was</h4>
+        <p>Same 3-wire swap: <code>VCC→3.3V</code>, <code>GND→GND</code>, <code>AOUT→GPIO35</code>. Plug the XH2.54 probe connector into the PCB header before wiring. Dip the 2-rod probe into the water sample.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">4</div>
+      <div>
+        <h4>Connect Turbidity Sensor where the turbidity potentiometer was</h4>
+        <p>Same 3-wire swap: <code>VCC→3.3V</code>, <code>GND→GND</code>, <code>OUT→GPIO32</code>. If your module is 5V only, add voltage divider: 10kΩ from sensor OUT to GPIO32, then 20kΩ from GPIO32 to GND.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">5</div>
+      <div>
+        <h4>Open sketch.ino — uncomment ONE line and re-upload</h4>
+        <p>Find the line near the top: <code>// #define PHYSICAL_MODE</code></p>
+        <p>Remove the <code>//</code> so it reads: <code>#define PHYSICAL_MODE</code></p>
+        <p>Click Upload in Arduino IDE. Done. The Serial Monitor will now show <strong>"MODE: PHYSICAL (real sensors)"</strong> on boot.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">6</div>
+      <div>
+        <h4>Test each sensor before final deployment</h4>
+        <ul>
+          <li>Dip DS18B20 in water — should read close to room temperature (20–28°C)</li>
+          <li>Dip pH probe in tap water — should read pH 6.5–8.0</li>
+          <li>Dip TDS probe in tap water — should read 100–400 ppm</li>
+          <li>Dip turbidity sensor in clear water — should read &lt;2 NTU. Stir in a pinch of flour — NTU should rise sharply.</li>
+          <li>LEDs: Green = safe, Yellow = 1 issue, Red = 2+ issues</li>
+        </ul>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">7</div>
+      <div>
+        <h4>Switch to battery power for portable deployment</h4>
+        <p>Connect TP4056 OUT+ → ESP32 VIN (not 3.3V!), TP4056 OUT− → ESP32 GND. Insert 18650 cell into holder. Unplug USB. The circuit should keep running from battery.</p>
+        <div class="callout info"><strong>Battery life:</strong> ~12 hours continuous at 240mA. Use deep sleep between readings to extend to days/weeks.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── FINAL CHECKLIST ─── -->
+  <div class="stitle">Pre-Deployment Checklist</div>
+  <div class="checklist">
+    <div class="ci"><input type="checkbox" id="c1"><label for="c1"><strong>Simulation works:</strong> Wokwi runs, Serial Monitor shows readings, LEDs respond to pot values</label></div>
+    <div class="ci"><input type="checkbox" id="c2"><label for="c2"><strong>3 pots removed</strong> from GPIO34, GPIO35, GPIO32 rows on breadboard</label></div>
+    <div class="ci"><input type="checkbox" id="c3"><label for="c3"><strong>pH PCB</strong> wired: VCC→3.3V, GND→GND, Po→GPIO34. BNC probe locked in.</label></div>
+    <div class="ci"><input type="checkbox" id="c4"><label for="c4"><strong>pH calibrated</strong> at pH 7.00 using buffer sachet. Trimmer pot adjusted.</label></div>
+    <div class="ci"><input type="checkbox" id="c5"><label for="c5"><strong>TDS PCB</strong> wired: VCC→3.3V, GND→GND, AOUT→GPIO35. Probe connector seated.</label></div>
+    <div class="ci"><input type="checkbox" id="c6"><label for="c6"><strong>Turbidity sensor</strong> wired: VCC→3.3V, GND→GND, OUT→GPIO32. Voltage divider if 5V module.</label></div>
+    <div class="ci"><input type="checkbox" id="c7"><label for="c7"><strong>DS18B20</strong> still wired correctly. 4.7kΩ pull-up still in place. Reads room temp.</label></div>
+    <div class="ci"><input type="checkbox" id="c8"><label for="c8"><strong>3 LEDs</strong> still wired to GPIO13/12/14 with 220Ω resistors. Passed boot blink test.</label></div>
+    <div class="ci"><input type="checkbox" id="c9"><label for="c9"><strong>#define PHYSICAL_MODE</strong> uncommented in sketch.ino. Re-uploaded successfully.</label></div>
+    <div class="ci"><input type="checkbox" id="c10"><label for="c10"><strong>Serial Monitor</strong> shows "MODE: PHYSICAL" and reasonable sensor readings.</label></div>
+    <div class="ci"><input type="checkbox" id="c11"><label for="c11"><strong>All sensors tested</strong> in water sample — readings pass sanity check.</label></div>
+    <div class="ci"><input type="checkbox" id="c12"><label for="c12"><strong>Battery power tested</strong> — circuit runs on 18650 with USB unplugged.</label></div>
+  </div>
+
+  <div class="final">
+    <div style="font-size:48px;margin-bottom:12px;">✅</div>
+    <h2>ALL CHECKS PASSED — YOU'RE PLUG-IN READY</h2>
+    <p>Your physical water quality monitor is live. Dip all probes into your water sample,<br>wait 30 seconds for readings to stabilize, and read the Serial Monitor or WiFi dashboard.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
