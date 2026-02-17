@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "author": "AquaMonitor Physical Circuit",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 200,
+      "left": 260,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ds18b20",
+      "id": "temp1",
+      "top": 60,
+      "left": 20,
+      "attrs": { "label": "DS18B20 Temp Sensor" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 140,
+      "left": 130,
+      "attrs": { "value": "4700", "label": "4.7k pull-up" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_ph",
+      "top": 40,
+      "left": 380,
+      "attrs": { "label": "pH Sensor (GPIO34)", "value": "0.5" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_tds",
+      "top": 40,
+      "left": 510,
+      "attrs": { "label": "TDS Sensor (GPIO35)", "value": "0.25" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_turb",
+      "top": 40,
+      "left": 640,
+      "attrs": { "label": "Turbidity (GPIO32)", "value": "0.05" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_safe",
+      "top": 380,
+      "left": 100,
+      "attrs": { "color": "green", "label": "SAFE" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_warn",
+      "top": 380,
+      "left": 140,
+      "attrs": { "color": "yellow", "label": "WARN" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_bad",
+      "top": 380,
+      "left": 180,
+      "attrs": { "color": "red", "label": "UNSAFE" }
+    }
+  ],
+  "connections": [
+    ["esp:GND.1",  "temp1:GND", "black",  []],
+    ["esp:3V3",    "temp1:VCC", "red",    []],
+    ["esp:D4",     "temp1:DQ",  "blue",   []],
+    ["temp1:DQ",   "r1:1",      "blue",   []],
+    ["r1:2",       "esp:3V3",   "red",    []],
+
+    ["esp:GND.1",  "pot_ph:GND",  "black",  []],
+    ["esp:3V3",    "pot_ph:VCC",  "red",    []],
+    ["esp:D34",    "pot_ph:SIG",  "yellow", []],
+
+    ["esp:GND.1",  "pot_tds:GND", "black",  []],
+    ["esp:3V3",    "pot_tds:VCC", "red",    []],
+    ["esp:D35",    "pot_tds:SIG", "orange", []],
+
+    ["esp:GND.1",  "pot_turb:GND","black",  []],
+    ["esp:3V3",    "pot_turb:VCC","red",    []],
+    ["esp:D32",    "pot_turb:SIG","purple", []],
+
+    ["esp:D13",    "led_safe:A",  "green",  []],
+    ["esp:D12",    "led_warn:A",  "yellow", []],
+    ["esp:D14",    "led_bad:A",   "red",    []],
+    ["esp:GND.2",  "led_safe:K",  "black",  []],
+    ["esp:GND.2",  "led_warn:K",  "black",  []],
+    ["esp:GND.2",  "led_bad:K",   "black",  []]
+  ],
+  "dependencies": {}
+}
